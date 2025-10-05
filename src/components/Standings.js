@@ -7,17 +7,7 @@ export default function Standings() {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTournaments();
-  }, []);
-
-  useEffect(() => {
-    if (selectedTournament) {
-      calculateStandings();
-    }
-  }, [selectedTournament]);
-
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('tournaments')
@@ -28,9 +18,11 @@ export default function Standings() {
     } catch (error) {
       console.error('Error fetching tournaments:', error);
     }
-  };
+  }, []);
 
   const calculateStandings = useCallback(async () => {
+    if (!selectedTournament) return;
+    
     setLoading(true);
     try {
       // Get all completed matches for selected tournament
@@ -113,7 +105,15 @@ export default function Standings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTournament]);
+
+  useEffect(() => {
+    fetchTournaments();
+  }, [fetchTournaments]);
+
+  useEffect(() => {
+    calculateStandings();
+  }, [calculateStandings]);
 
   const getSelectedTournamentName = () => {
     const tournament = tournaments.find(t => t.id === selectedTournament);
@@ -221,4 +221,3 @@ export default function Standings() {
     </div>
   );
 }
-

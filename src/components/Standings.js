@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function Standings() {
@@ -30,7 +30,7 @@ export default function Standings() {
     }
   };
 
-  const calculateStandings = async () => {
+  const calculateStandings = useCallback(async () => {
     setLoading(true);
     try {
       // Get all completed matches for selected tournament
@@ -221,3 +221,4 @@ export default function Standings() {
     </div>
   );
 }
+

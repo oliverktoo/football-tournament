@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { useAuth } from '../contexts/AuthContext';
+
 
 export default function PlayerForm({ onPlayerCreated }) {
   const [name, setName] = useState('');
@@ -11,7 +11,7 @@ export default function PlayerForm({ onPlayerCreated }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const { user } = useAuth();
+  
 
   useEffect(() => {
     fetchTeams();
@@ -19,7 +19,7 @@ export default function PlayerForm({ onPlayerCreated }) {
 
   const fetchTeams = async () => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('teams')
         .select('*')
         .order('name');
@@ -37,7 +37,7 @@ export default function PlayerForm({ onPlayerCreated }) {
     setMessage('');
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('players')
         .insert([
           { 
@@ -130,3 +130,4 @@ export default function PlayerForm({ onPlayerCreated }) {
     </div>
   );
 }
+

@@ -18,7 +18,7 @@ export default function TournamentForm({ onTournamentCreated }) {
     setMessage('');
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('tournaments')
         .insert([
           { 
@@ -104,3 +104,4 @@ export default function TournamentForm({ onTournamentCreated }) {
     </div>
   );
 }
+

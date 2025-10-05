@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function TournamentTeams({ onTeamsAssigned }) {
@@ -48,7 +48,7 @@ export default function TournamentTeams({ onTeamsAssigned }) {
     }
   };
 
-  const fetchTournamentTeams = async () => {
+  const fetchTournamentTeams = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('tournament_teams')
@@ -205,3 +205,4 @@ export default function TournamentTeams({ onTeamsAssigned }) {
     </div>
   );
 }
+

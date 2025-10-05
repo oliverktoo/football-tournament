@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function MatchForm({ onMatchCreated }) {
@@ -8,24 +8,11 @@ export default function MatchForm({ onMatchCreated }) {
   const [homeTeam, setHomeTeam] = useState('');
   const [awayTeam, setAwayTeam] = useState('');
   const [matchDate, setMatchDate] = useState('');
-  const [matchTime, setMatchTime] = useState('');
   const [venue, setVenue] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    fetchTournaments();
-  }, []);
-
-  useEffect(() => {
-    if (selectedTournament) {
-      fetchTournamentTeams();
-    } else {
-      setTournamentTeams([]);
-    }
-  }, [selectedTournament]);
-
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('tournaments')
@@ -37,9 +24,14 @@ export default function MatchForm({ onMatchCreated }) {
     } catch (error) {
       console.error('Error fetching tournaments:', error);
     }
-  };
+  }, []);
 
-  const fetchTournamentTeams = async () => {
+  const fetchTournamentTeams = useCallback(async () => {
+    if (!selectedTournament) {
+      setTournamentTeams([]);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('tournament_teams')
@@ -58,7 +50,15 @@ export default function MatchForm({ onMatchCreated }) {
       console.error('Error fetching tournament teams:', error);
       setTournamentTeams([]);
     }
-  };
+  }, [selectedTournament]);
+
+  useEffect(() => {
+    fetchTournaments();
+  }, [fetchTournaments]);
+
+  useEffect(() => {
+    fetchTournamentTeams();
+  }, [fetchTournamentTeams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,30 +82,27 @@ export default function MatchForm({ onMatchCreated }) {
     setMessage('');
 
     try {
-      const { data, error } = await supabase
+      const matchData = {
+        tournament_id: selectedTournament,
+        home_team_id: homeTeam,
+        away_team_id: awayTeam
+      };
+
+      if (matchDate) matchData.match_date = matchDate;
+      if (venue) matchData.venue = venue;
+
+      const { error } = await supabase
         .from('matches')
-        .insert([
-          { 
-            tournament_id: selectedTournament,
-            home_team_id: homeTeam,
-            away_team_id: awayTeam,
-            match_date: matchDate,
-            match_time: matchTime,
-            venue: venue,
-            status: 'scheduled'
-          }
-        ])
+        .insert([matchData])
         .select();
 
       if (error) throw error;
 
       setMessage('Match scheduled successfully!');
-      // Reset form
       setSelectedTournament('');
       setHomeTeam('');
       setAwayTeam('');
       setMatchDate('');
-      setMatchTime('');
       setVenue('');
       
       if (onMatchCreated) {
@@ -127,7 +124,6 @@ export default function MatchForm({ onMatchCreated }) {
     <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '10px', marginBottom: '20px' }}>
       <h3>Schedule Match</h3>
       <form onSubmit={handleSubmit}>
-        {/* Tournament Selection */}
         <div style={{ marginBottom: '15px' }}>
           <label>Tournament: </label>
           <select
@@ -147,7 +143,6 @@ export default function MatchForm({ onMatchCreated }) {
 
         {selectedTournament && (
           <>
-            {/* Team Selection - Only shows teams in selected tournament */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
               <div>
                 <label>Home Team: </label>
@@ -183,28 +178,14 @@ export default function MatchForm({ onMatchCreated }) {
               </div>
             </div>
 
-            {/* Match Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-              <div>
-                <label>Match Date: </label>
-                <input
-                  type="date"
-                  value={matchDate}
-                  onChange={(e) => setMatchDate(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-                />
-              </div>
-              <div>
-                <label>Match Time: </label>
-                <input
-                  type="time"
-                  value={matchTime}
-                  onChange={(e) => setMatchTime(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-                />
-              </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label>Match Date: </label>
+              <input
+                type="date"
+                value={matchDate}
+                onChange={(e) => setMatchDate(e.target.value)}
+                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
+              />
             </div>
 
             <div style={{ marginBottom: '15px' }}>
@@ -218,7 +199,6 @@ export default function MatchForm({ onMatchCreated }) {
               />
             </div>
 
-            {/* Tournament Info */}
             <div style={{ 
               background: '#e8f4fc', 
               padding: '10px', 
